@@ -1,21 +1,23 @@
 #!/bin/bash
 
 export PATH=/usr/local/bin:$HOME/.local/bin:$PATH
-backup-prepare
 
+cleanup
 source ~/.config/borg.conf
-export BORG_PROGRESS="--stats --progress -v"
 
-borg create $BORG_PROGRESS -xC zstd,22 \
+#borg create $BORG_PROGRESS -xC zstd,22 \
+borg create $BORG_PROGRESS -xC auto,lzma,9 \
 -e .DS_Store \
 -e $HOME/.cache \
 -e $HOME/Downloads \
+-e $HOME/Desktop \
 -e $HOME/Library \
 -e $HOME/Projects \
 -e $HOME/.Trash \
+-e $HOME/Virtual\ Machines \
 ::'{now:%Y-%m-%d}' $HOME
 
 # borg prune --keep-daily 100
-borg compact --threshold 0 --cleanup-commits
-
 # borg prune --keep-daily 7 --keep-weekly 8 --keep-monthly 12
+
+borg compact --threshold 0 --cleanup-commits

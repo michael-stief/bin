@@ -1,0 +1,25 @@
+#!/bin/bash
+
+export PATH=/usr/local/bin:$PATH
+
+brew upgrade >/tmp/brew_upgrade.log 2>&1
+brew cleanup --prune=all >>/tmp/brew_upgrade.log 2>&1
+
+rm -rf $HOME/{.gecamed,.viminfo,.CFUserTextEncoding,.bash_history,.lesshst,.oracle_jre_usage,.aspnet,.cups} $HOME/Movies/{Infuse,anydesk,TV} 2>/dev/null
+rm -f /tmp/ad_*_subevt_* /tmp/ad_gevt_* $HOME/.local/share/recently-used.xbel 2>/dev/null
+
+touch /tmp/ref || exit 1
+
+find $HOME \
+    -iname .ds_store -o -name '._*' | while read i; do
+    touch -r "$(dirname "$i")" /tmp/ref || exit 1
+    rm -f "$i" && touch -r /tmp/ref "$(dirname "$i")"
+done
+
+find $HOME \
+    -iname '.localized' | while read i; do
+    touch -r "$(dirname "$i")" /tmp/ref || exit 1
+    rm -rf "$i" && touch -r /tmp/ref "$(dirname "$i")"
+done
+
+rm -f /tmp/ref

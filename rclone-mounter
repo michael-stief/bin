@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# $1: rclone device name
+# $2: local mount path
+# $3: volume display name
+# $4: remote path (optional)
+
+PATH="/usr/local/bin:$PATH"
+
+opts="--checksum "
+opts+="--vfs-cache-mode writes "
+opts+="--vfs-cache-max-age 5m "
+opts+="--dir-cache-time 1m "
+opts+="--vfs-read-chunk-size 1M "
+opts+="--vfs-read-chunk-size-limit 128M "
+
+mkdir -p "$2" &&
+is_empty "$2" &&
+rclone mount $opts --volname "$3" $1:"$4" "$2"
