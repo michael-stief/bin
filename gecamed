@@ -1,0 +1,42 @@
+#!/bin/bash
+
+l='\033[0;45m'
+c='\033[0;36m'
+r='\033[0;31m'
+y='\033[0;33m'
+n='\033[0m'
+
+echo
+echo -e "${l} See KeePass for credentials ${n}"
+echo
+echo -en "${y}Servername: ${n}"
+read host
+
+echo -en "${y}IP address: ${n}"
+read ip
+
+echo
+echo -e "${y}❯ ${r}sudo ${c}ifconfig lo0 alias $ip/32${n}"
+sudo ifconfig lo0 alias $ip/32
+
+echo
+echo -e "${l} http://$ip:8080/gecamed/GECAMedClient.zip ${n}"
+echo
+echo -e "${y}❯${c} Connecting to server${n} (Press Ctrl+D to logout from server)${n}"
+echo
+
+lh='127.0.0.1'
+ssh -t \
+-L $ip:8009:$lh:18009 -L $ip:1098:$lh:11098 -L $ip:1099:$lh:11099 -L $ip:8080:$lh:18080 -L $ip:8083:$lh:18083 \
+-L $ip:4444:$lh:14444 -L $ip:8093:$lh:18093 -L $ip:4445:$lh:14445 -L $ip:3873:$lh:13873 -L $lh:5432:$lh:15432 \
+ssh-proxy ssh \
+-L $lh:18009:$ip:8009 -L $lh:11098:$ip:1098 -L $lh:11099:$ip:1099 -L $lh:18080:$ip:8080 -L $lh:18083:$ip:8083 \
+-L $lh:14444:$ip:4444 -L $lh:18093:$ip:8093 -L $lh:14445:$ip:4445 -L $lh:13873:$ip:3873 -L $lh:15432:$lh:5432 \
+kirepo@$host
+
+echo
+echo -e "${y}❯ ${r}sudo ${c}ifconfig lo0 -alias $ip${n}"
+sudo ifconfig lo0 -alias $ip
+
+echo
+echo -e "${y}❯ ${c}Done${n}"

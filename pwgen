@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# get dictionary
+dict=()
+while IFS= read -r line; do
+   dict+=("$line")
+done <~/.config/english.txt
+dict_size=$(cat ~/.config/english.txt | wc -l)
+
+# set extra characters (removed ambiguous ones)
+number_pool='2346789'
+symbol_pool='!#_/+'
+upchar_pool='CDFHJKMQRTVWXY'
+
+# initialize vars
+[ -z "$1" ] && size=64 || size=$1
+rf=$(($size/5)) # random factor to spread extra chars in string (value too high -> chars rarely added -> very long runtime)
+let size++ # +1 for leading whitespace
+i=0
+password=''
+
+# better random generator
+function rand { echo $(od -An -N2 -i /dev/random); }
+
+# infinite loop - ends when password found
+while :; do
+
+    # size >31: always add a word each run
+    # size <32: randomly add a word each run (prevent infinite loop/too long runs for short size)
+      if [ $size -gt 31 ]; then password+=$(echo -n \ ${dict[$(($(rand)%dict_size))]})
+    elif [ $(($(rand)%rf)) -eq 0 ]; then password+=$(echo -n \ ${dict[$(($(rand)%dict_size))]})
+    fi
+
+    # randomly add a number, symbol and upchar a single time
+      if [ ! $number_used ] && [ $(($(rand)%rf)) -eq 0 ]; then password+=\ ${number_pool:$(($(rand)%07)):1}; number_used=1
+    elif [ ! $symbol_used ] && [ $(($(rand)%rf)) -eq 0 ]; then password+=\ ${symbol_pool:$(($(rand)%05)):1}; symbol_used=1
+    elif [ ! $upchar_used ] && [ $(($(rand)%rf)) -eq 0 ]; then password+=\ ${upchar_pool:$(($(rand)%14)):1}; upchar_used=1
+    fi
+
+    # check if password is too large or invalid
+      if [ ${#password} -gt $size ]; then password=''; unset -v number_used symbol_used upchar_used; echo -en "  $((++i))\r"
+    elif [ ${#password} -eq $size ] && [ $number_used ] && [ $symbol_used ] && [ $upchar_used ] && [ ! "${password:$((size-2)):1}" = " " ]; then break
+    fi
+
+done
+
+# print password
+echo $password

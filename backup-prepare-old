@@ -1,0 +1,14 @@
+#!/bin/bash
+
+brew cleanup --prune=all 2>/dev/null
+rm  -f -- "$HOME/.CFUserTextEncoding" "$HOME/.bash_history" "$HOME/.lesshst" 2>/dev/null
+rm -rf -- "$HOME/.gecamed" "$HOME/.oracle_jre_usage" "$HOME/.cups" "$HOME/.local/share/recently-used.xbel" 2>/dev/null
+
+touch /tmp/ref || exit 1
+
+find $HOME -iname ".ds_store" | while read i; do
+    touch -r "$(dirname "$i")" /tmp/ref || exit 1
+    rm -f "$i" && touch -r /tmp/ref "./$(dirname "$i")"
+done
+
+rm -f /tmp/ref

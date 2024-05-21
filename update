@@ -1,0 +1,63 @@
+#!/bin/sh
+
+c='\033[0;36m'
+r='\033[0;31m'
+y='\033[0;33m'
+n='\033[0m'
+
+export PATH=$PATH:/Users/michael/.local/bin
+set -ex
+mkdir -p /tmp/update
+cd /tmp/update
+
+# +-------+
+# |  mpv  |
+# +-------+
+curl -JLORs https://laboratory.stolendata.net/~djinn/mpv_osx/mpv-latest.tar.gz
+tar -xf mpv-latest.tar.gz
+rm mpv-latest.tar.gz
+rsync -a --delete mpv.app/ /Applications/mpv.app
+echo $c"mpv updated\n"$n
+
+# +------+
+# | brew |
+# +------+
+brew update
+echo $c"brew updated\n"$n
+
+# +--------+
+# | rclone |
+# +--------+
+service pcloud stop || true
+curl -JLORs https://downloads.rclone.org/rclone-current-osx-amd64.zip
+unzip -q rclone-current-osx-amd64.zip
+rsync -a rclone-*-osx-amd64/rclone /usr/local/bin/
+rsync -a rclone-*-osx-amd64/rclone.1 /usr/local/share/man/man1/
+service pcloud start
+echo $c"rclone updated\n"$n
+
+# +--------+
+# | ffmpeg |
+# +--------+
+curl -JLORs https://evermeet.cx/ffmpeg/getrelease/zip
+unzip -q ffmpeg-*.zip
+rsync -a ffmpeg /usr/local/bin
+echo $c"ffmpeg updated\n"$n
+
+# +-------+
+# | flood |
+# +-------+
+service flood stop || true
+curl -JLORs https://nightly.link/jesec/flood/workflows/publish-rolling/master/flood-macos-x64.zip
+unzip flood-macos-x64.zip
+chmod +x flood-macos-x64
+rsync -a flood-macos-x64 /usr/local/bin/flood
+service flood start
+echo $c"flood updated\n"$n
+
+# +--------+
+# | yt-dlp |
+# +--------+
+/usr/local/bin/yt-dlp -U
+
+rm -rf /tmp/update
