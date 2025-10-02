@@ -1,25 +1,69 @@
-#!/bin/bash
+#!/bin/zsh
 
-export PATH=/usr/local/bin:$PATH
+#set -xv
 
-brew upgrade >/tmp/brew_upgrade.log 2>&1
-brew cleanup --prune=all >>/tmp/brew_upgrade.log 2>&1
+l='\033[0;45m'
+c='\033[0;36m'
+r='\033[0;31m'
+y='\033[0;33m'
+n='\033[0m'
 
-rm -rf $HOME/{.gecamed,.viminfo,.CFUserTextEncoding,.bash_history,.lesshst,.oracle_jre_usage,.aspnet,.cups} $HOME/Movies/{Infuse,anydesk,TV} 2>/dev/null
-rm -f /tmp/ad_*_subevt_* /tmp/ad_gevt_* $HOME/.local/share/recently-used.xbel 2>/dev/null
+function show() {
+  if [ -t 1 ] ; then
+    echo -e "$1"
+  fi
+}
 
-touch /tmp/ref || exit 1
+# Old stuff from previois revision
+#find / -xdev \( -path "/System" -o -path "/Library" -o -path "/private" \) -prune -o \( -iname .ds_store -or -name "._*" -or -iname .localized \) -print0 2>/dev/null | \
+#find / /Volumes/data $HOME -xdev \( -iname .ds_store -or -name "._*" -or -iname .localized \) -print0 2>/dev/null | while IFS= read -r -d '' file; do echo $file; delete "$file"; done
 
-find $HOME \
-    -iname .ds_store -o -name '._*' | while read i; do
-    touch -r "$(dirname "$i")" /tmp/ref || exit 1
-    rm -f "$i" && touch -r /tmp/ref "$(dirname "$i")"
+TARGETS=(
+  "/Users/michael"
+  "/Volumes/data"
+  "/Volumes/SSD"
+)
+
+
+typeset -A dir_mtimes
+
+for i in "${TARGETS[@]}"; do
+  test -e "$i" || continue
+  show "${l}Scan: ${i}${n}"
+  find "$i" -xdev \( -name ".DS_Store" -or -name "._*" \) -print0 2>/dev/null | while IFS= read -r -d '' file; do
+    dir="${file:h}"
+    if test -z "${dir_mtimes[$dir]}"; then
+      dir_mtimes[$dir]=$(stat -f "%Sm" -t "%Y%m%d%H%M.%S" -- "$dir")
+      show "${c}Saving $dir_mtimes[$dir] for $dir${n}"
+    fi
+    show "${r}Removing $file${n}"
+    rm -- "$file"
+    sleep 0.2
+  done
+
+  sleep 2
+
+  for dir timestamp in ${(kv)dir_mtimes}; do
+    show "${y}Restoring $timestamp for $dir${n}"
+    touch -t "$timestamp" -- "$dir"
+    sleep 0.2
+  done
+  show "${l}Done: ${i}${n}"
 done
 
-find $HOME \
-    -iname '.localized' | while read i; do
-    touch -r "$(dirname "$i")" /tmp/ref || exit 1
-    rm -rf "$i" && touch -r /tmp/ref "$(dirname "$i")"
-done
+/usr/local/bin/brew cleanup --prune=all >/dev/null 2>&1
+#xattr -rd com.apple.FinderInfo "$HOME" 2>/dev/null
+find "$HOME/Library/Caches/rclone" -type d -mindepth 2 -mtime +1h -empty -exec rmdir {} +
+rm -f /tmp/ad_*_subevt_*(N) /tmp/ad_gevt_*(N) "$HOME"/Movies/anydesk/*(N) 2>/dev/null
 
-rm -f /tmp/ref
+r=$(stat -f "%Sm" -t "%Y%m%d%H%M.%S" -- "$HOME")
+rm -rf "$HOME"/.{viminfo,CFUserTextEncoding,bash_history,lesshst,gecamed,oracle_jre_usage,aspnet,cups,boltai,intellibar,oracle_jre_usage,boltai}
+touch -t $r -- "$HOME"
+
+r=$(stat -f "%Sm" -t "%Y%m%d%H%M.%S" -- "$HOME/Movies")
+rm -rf "$HOME"/Movies/{Infuse,TV}
+touch -t $r -- "$HOME/Movies"
+
+r=$(stat -f "%Sm" -t "%Y%m%d%H%M.%S" -- "$HOME/.local/share")
+#rm "$HOME/.local/share/recently-used.xbel"
+touch -t $r -- "$HOME/.local/share"

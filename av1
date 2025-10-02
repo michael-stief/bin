@@ -1,11 +1,11 @@
 #!/bin/sh
 
-cpu=4
+cpu=8
 #vf="-filter:v scale=-1:720:flags=lanczos"
 #vf="-filter:v scale=iw/2:ih/2:flags=lanczos"
 cv="libaom-av1 -cpu-used $cpu -crf 30 -b:v 0"
 fps=$(ffprobe -show_streams "$1" 2>&1 | grep fps | awk '{split($0,a,"fps")}END{print a[1]}' | awk '{print $NF}')
-key=$(printf '%.0f' $(bc <<< "100*$fps"))
+key=$(printf '%.0f' $(bc <<< "10*$fps"))
 
 echo "CPU: $cpu"
 echo "FPS: $fps"

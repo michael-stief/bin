@@ -1,0 +1,24 @@
+#!/bin/bash
+
+ip=$1
+
+echo "Downloading Gecamed from http://$ip:8080/gecamed. Press enter to continue..."
+read foobar
+set -x
+mkdir -p ~/.gecamed/client/tmp
+cd ~/.gecamed/client/tmp || exit 1
+#curl -JLORs "http://$ip:8080/gecamed/GECAMedClient.zip"
+curl -JLOR "http://$ip:8080/gecamed/GECAMedClient.zip"
+unzip GECAMedClient.zip >/dev/null && rm GECAMedClient.zip
+cd GECAMedClient
+echo -en 00000000-0000-0000-0000-000000000001 > .client_uuid
+mkdir -p ~/.gecamed/00000000-0000-0000-0000-000000000001
+cd ~/.gecamed/00000000-0000-0000-0000-000000000001 || exit 1
+echo "WyB7CiAgInVybCIgOiAiMTI3LjAuMC4xOjEwOTkiLAogICJuYW1lIiA6ICJHRUNBTWVkIFNlcnZlciIKfSBd" | base64 -d > servers.json
+sed -i .bak "s/127.0.0.1/$ip/g" servers.json
+cd ~/.gecamed/client/tmp || exit 1
+cd GECAMedClient
+echo -en $ip > hostaddress.txt
+java -jar GECAMedClient.jar
+java -jar lib/GECAMedClient.jar
+rm -rf ~/.gecamed/client/tmp ~/.gecamed/00000000-0000-0000-0000-000000000001
